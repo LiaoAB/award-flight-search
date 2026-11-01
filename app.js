@@ -119,7 +119,7 @@ async function runSearch(event) {
   try {
     const response = await fetch("/api/search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ origin, destination, departure, returnDate, cabin, passengers, flexibleDates, allPrograms }) });
     const payload = await response.json();
-    if (!response.ok) throw new Error(payload.message || "即時資料服務暫時無法使用");
+    if (!response.ok) throw new Error(payload.error === "missing_api_key" ? "尚未設定 API key" : (payload.message || "即時資料服務暫時無法使用"));
     state.results = payload.results;
     const modeLabel = payload.mode === "live" ? "即時查詢" : "近期資料";
     setDataNotice(`已更新 ${payload.results.length} 筆${modeLabel}結果，資料時間 ${new Intl.DateTimeFormat("zh-TW", { hour: "2-digit", minute: "2-digit" }).format(new Date(payload.fetchedAt))}。請在航空公司官網再次確認座位。`);

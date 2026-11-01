@@ -137,7 +137,7 @@ const server = createServer(async (request, response) => {
       const payload = await readJsonBody(request);
       json(response, 200, await querySeats(payload));
     } catch (error) {
-      json(response, error.status || 502, { error: "award_search_failed", message: error.message || "即時資料服務暫時無法使用" });
+      json(response, error.status || 502, { error: error.message?.startsWith("尚未設定") ? "missing_api_key" : "award_search_failed", message: error.message || "即時資料服務暫時無法使用" });
     }
     return;
   }
