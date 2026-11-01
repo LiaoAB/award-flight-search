@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="比較航空里程兌換票：航線、所需點數、稅費與艙等。" />
+    <title>航旅點數雷達｜Award Flight Search</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="回到首頁">
+        <span class="brand-mark">✦</span>
+        <span>航旅點數雷達</span>
+      </a>
+      <nav class="topnav" aria-label="主要導覽">
+        <a class="active" href="#search">搜尋機票</a>
+        <a href="#programs">里程計畫</a>
+        <a href="#how-it-works">使用說明</a>
+      </nav>
+      <button class="ghost-button" id="saved-nav" type="button">收藏 <span id="saved-count">0</span></button>
+    </header>
+
+    <main id="top">
+      <section class="hero" id="search">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="pulse-dot"></span> 全聯盟點數搜尋器</p>
+          <h1>把里程，變成<br /><em>下一趟旅程。</em></h1>
+          <p class="hero-text">一次比較航空公司與里程計畫的兌換選項，找到最划算的點數、最低稅費和最適合你的航班。</p>
+        </div>
+
+        <div class="search-panel">
+          <div class="panel-topline">
+            <div class="trip-type" role="group" aria-label="行程類型">
+              <button class="trip-tab active" data-trip-type="roundtrip" type="button">來回</button>
+              <button class="trip-tab" data-trip-type="oneway" type="button">單程</button>
+            </div>
+            <label class="switch-label"><input id="flexible-dates" type="checkbox" checked /><span class="switch"></span> 日期前後 3 天</label>
+          </div>
+          <form id="search-form">
+            <div class="search-grid route-grid">
+              <label class="field route-field">
+                <span class="field-label">出發地</span>
+                <span class="input-with-icon"><span class="airport-icon">↗</span><input id="origin" name="origin" value="TPE" maxlength="3" autocomplete="off" aria-label="出發機場" /><span class="airport-name" id="origin-name">桃園</span></span>
+              </label>
+              <button class="swap-button" id="swap-route" type="button" aria-label="交換出發地與目的地">⇄</button>
+              <label class="field route-field">
+                <span class="field-label">目的地</span>
+                <span class="input-with-icon"><span class="airport-icon">↘</span><input id="destination" name="destination" value="LAX" maxlength="3" autocomplete="off" aria-label="目的機場" /><span class="airport-name" id="destination-name">洛杉磯</span></span>
+              </label>
+            </div>
+            <div class="search-grid detail-grid">
+              <label class="field"><span class="field-label">出發日期</span><input id="departure" name="departure" type="date" required /></label>
+              <label class="field"><span class="field-label">回程日期</span><input id="return" name="return" type="date" /></label>
+              <label class="field"><span class="field-label">艙等</span><select id="cabin" name="cabin"><option value="all">全部艙等</option><option value="economy">經濟艙</option><option value="premium">豪華經濟艙</option><option value="business" selected>商務艙</option><option value="first">頭等艙</option></select></label>
+              <label class="field"><span class="field-label">乘客</span><select id="passengers" name="passengers"><option>1 位成人</option><option>2 位成人</option><option>3 位成人</option><option>4 位成人</option></select></label>
+            </div>
+            <div class="search-actions">
+              <label class="all-programs"><input id="all-programs" type="checkbox" checked /><span class="checkmark">✓</span> 搜尋所有里程計畫</label>
+              <button class="primary-button" type="submit"><span>搜尋可兌換航班</span><span class="button-arrow">→</span></button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="results-section" id="results-section">
+        <div class="section-heading">
+          <div><p class="eyebrow">SEARCH RESULTS</p><h2>找到 <span id="result-count">0</span> 個兌換選項</h2></div>
+          <div class="results-controls"><span class="last-updated">資料時間 <span id="updated-at">—</span></span><label class="sort-select"><span>排序：</span><select id="sort-by"><option value="points">點數最少</option><option value="taxes">稅費最低</option><option value="duration">時間最短</option><option value="value">價值最高</option></select></label></div>
+        </div>
+
+        <div class="quick-filters" aria-label="快速篩選">
+          <button class="filter-pill active" data-filter="all" type="button">全部</button>
+          <button class="filter-pill" data-filter="business" type="button">商務艙</button>
+          <button class="filter-pill" data-filter="economy" type="button">經濟艙</button>
+          <button class="filter-pill" data-filter="nonstop" type="button">直飛</button>
+          <button class="filter-pill" data-filter="lowtax" type="button">低稅費</button>
+          <button class="filter-pill" data-filter="saved" type="button">我的收藏</button>
+        </div>
+        <div class="demo-notice"><span>ⓘ</span><span>目前顯示可互動的示範資料。接入航空公司或第三方 API 後，這裡會顯示即時座位與價格，並標示資料來源。</span><a href="#how-it-works">了解資料來源 →</a></div>
+        <div id="results" class="results-list" aria-live="polite"></div>
+      </section>
+
+      <section class="program-section" id="programs">
+        <div class="section-heading compact"><div><p class="eyebrow">SUPPORTED PROGRAMS</p><h2>一個搜尋，涵蓋主要里程計畫</h2></div><span class="program-count" id="program-count">0 個計畫</span></div>
+        <div class="program-grid" id="program-grid"></div>
+      </section>
+
+      <section class="how-section" id="how-it-works">
+        <div class="how-intro"><p class="eyebrow">HOW IT WORKS</p><h2>從「我有點數」<br />到「我有機票」。</h2></div>
+        <div class="steps"><article><span>01</span><h3>輸入航線與日期</h3><p>指定出發地、目的地、日期與艙等，或開啟彈性日期尋找更多空位。</p></article><article><span>02</span><h3>比較兌換方式</h3><p>將各里程計畫的點數、現金稅費、航班時間與轉機次數放在一起比較。</p></article><article><span>03</span><h3>前往官方預訂</h3><p>找到合適的結果後，確認即時座位並在航空公司官網完成兌換。</p></article></div>
+      </section>
+    </main>
+
+    <footer><span>✦ 航旅點數雷達</span><span>Built for smarter award travel · v0.1</span></footer>
+    <script src="app.js" type="module"></script>
+  </body>
+</html>
