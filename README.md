@@ -10,6 +10,7 @@
 - 結果收藏（使用瀏覽器 localStorage）
 - 響應式介面，手機與桌面都可使用
 - `AwardProvider` 的資料邊界已預留，方便接入即時庫存 API
+- Seats.aero Partner API adapter：支援 `cached` 與需商業授權的 `live` 模式
 
 ## 本機執行
 
@@ -22,9 +23,22 @@ npm start
 
 開啟 <http://localhost:4173>。
 
+## 接入 Seats.aero
+
+1. 複製環境變數範例：`cp .env.example .env`
+2. 將 `SEATS_AERO_API_KEY` 設為你的 Partner API key。
+3. 啟動伺服器（Node 不會自動載入 `.env`，可先用 shell 匯入）：
+
+```bash
+set -a; source .env; set +a
+npm start
+```
+
+預設 `SEATS_AERO_MODE=cached`，會查詢近期已抓取的兌換庫存；設定 `SEATS_AERO_MODE=live` 會逐一查詢支援的里程計畫，但 Seats.aero 官方目前要求 live search 具備商業協議。API key 一律由 Node server 保存，瀏覽器只呼叫本專案的 `/api/search`，不會暴露密鑰。
+
 ## 即時資料整合說明
 
-目前畫面中的航班是明確標示的 `Demo provider` 示範資料，不代表即時座位或保證可兌換。航空公司通常不提供公開的跨聯盟兌換座位 API；要做真實查詢，應在伺服器端建立 provider adapter，並依各服務的授權、速率限制與使用條款串接。
+沒有設定 `SEATS_AERO_API_KEY` 時，畫面會回退到明確標示的 `Demo provider` 示範資料，不代表即時座位或保證可兌換。即使 API 回傳可兌換，座位也可能在前往航空公司官網時被其他旅客訂走，仍應在付款前再次確認。
 
 建議的 adapter 回傳格式：
 

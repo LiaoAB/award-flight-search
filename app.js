@@ -52,7 +52,7 @@ function getDate(offset) {
 }
 
 function formatNumber(value) { return new Intl.NumberFormat("zh-TW").format(value); }
-function programFor(id) { return programs.find((program) => program.id === id) || programs[0]; }
+function programFor(id) { return programs.find((program) => program.id === id) || { id, name: id, airline: id, alliance: "Partner", mark: String(id).slice(0, 2).toUpperCase() }; }
 function updateAirportName(field) {
   const value = $(field).value.trim().toUpperCase();
   $(`#${field.replace("#", "")}-name`).textContent = airportNames[value] || "自訂機場";
@@ -87,22 +87,52 @@ function renderResults() {
   $("#results").innerHTML = items.map((item) => {
     const program = programFor(item.program);
     const saved = state.saved.includes(itemKey(item));
-    return `<article class="result-card"><div class="airline-meta"><div class="airline-main"><span class="airline-logo">${program.mark}</span><span>${item.airline}</span></div><div class="subline">${item.flight} · ${item.cabinLabel}</div></div><div class="flight-meta"><div class="flight-time">${item.depart}<span class="arrow">→</span>${item.arrive}</div><div class="flight-route">${item.route} · ${item.stops}</div></div><div class="price-meta"><div class="price-main">${formatNumber(item.points)} <small>點</small></div><div class="taxes">+ ${formatNumber(item.taxes)} ${item.currency} 稅費</div></div><div class="source-meta"><span class="availability">可兌換</span><div class="source">${program.name} · ${item.source}</div></div><button class="save-button ${saved ? "saved" : ""}" data-save="${itemKey(item)}" aria-label="${saved ? "取消收藏" : "收藏"}">${saved ? "♥" : "♡"}</button></article>`;
+    const seatText = item.seats > 0 ? ` · ${item.seats} 席` : "";
+    return `<article class="result-card"><div class="airline-meta"><div class="airline-main"><span class="airline-logo">${program.mark}</span><span>${item.airline}</span></div><div class="subline">${item.flight} · ${item.cabinLabel}</div></div><div class="flight-meta"><div class="flight-time">${item.depart}<span class="arrow">→</span>${item.arrive}</div><div class="flight-route">${item.route} · ${item.stops}</div></div><div class="price-meta"><div class="price-main">${formatNumber(item.points)} <small>點</small></div><div class="taxes">+ ${formatNumber(item.taxes)} ${item.currency} 稅費</div></div><div class="source-meta"><span class="availability">可兌換${seatText}</span><div class="source">${program.name} · ${item.source}</div></div><button class="save-button ${saved ? "saved" : ""}" data-save="${itemKey(item)}" aria-label="${saved ? "取消收藏" : "收藏"}">${saved ? "♥" : "♡"}</button></article>`;
   }).join("");
 }
 
-function runSearch(event) {
+function demoResultsForSearch(origin, destination, departure, cabin, allPrograms) {
+  const seed = (origin + destination + departure).split("").reduce((sum, character) => sum + character.charCodeAt(0), 0);
+  return demoFlights.map((flight, index) => ({ ...flight, route: flight.route.replace("TPE", origin).replace("LAX", destination), points: flight.points + ((seed + index * 13) % 5) * 1000 })).filter((flight) => (allPrograms || flight.program === "aeroplan") && (cabin === "all" || flight.cabin === cabin));
+}
+
+function setDataNotice(message, kind = "info") {
+  $("#data-notice-text").textContent = message;
+  $("#data-notice").classList.toggle("error-notice", kind === "error");
+}
+
+async function runSearch(event) {
   event?.preventDefault();
   const origin = $("#origin").value.trim().toUpperCase() || "TPE";
   const destination = $("#destination").value.trim().toUpperCase() || "LAX";
   const cabin = $("#cabin").value;
   const allPrograms = $("#all-programs").checked;
   const departure = $("#departure").value;
-  const seed = (origin + destination + departure).split("").reduce((sum, character) => sum + character.charCodeAt(0), 0);
-  state.results = demoFlights.map((flight, index) => ({ ...flight, route: flight.route.replace("TPE", origin).replace("LAX", destination), points: flight.points + ((seed + index * 13) % 5) * 1000 })).filter((flight) => (allPrograms || flight.program === "aeroplan") && (cabin === "all" || flight.cabin === cabin));
+  const returnDate = $("#return").value;
+  const passengers = Number($("#passengers").selectedIndex) + 1;
+  const flexibleDates = $("#flexible-dates").checked;
+  const submitButton = $(".primary-button");
+  submitButton.disabled = true;
+  submitButton.querySelector("span:first-child").textContent = "正在查詢即時座位…";
+  setDataNotice("正在向資料供應商查詢座位與兌換價格，通常需要幾秒鐘…");
+  try {
+    const response = await fetch("/api/search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ origin, destination, departure, returnDate, cabin, passengers, flexibleDates, allPrograms }) });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.message || "即時資料服務暫時無法使用");
+    state.results = payload.results;
+    const modeLabel = payload.mode === "live" ? "即時查詢" : "近期資料";
+    setDataNotice(`已更新 ${payload.results.length} 筆${modeLabel}結果，資料時間 ${new Intl.DateTimeFormat("zh-TW", { hour: "2-digit", minute: "2-digit" }).format(new Date(payload.fetchedAt))}。請在航空公司官網再次確認座位。`);
+    $("#updated-at").textContent = new Intl.DateTimeFormat("zh-TW", { hour: "2-digit", minute: "2-digit" }).format(new Date(payload.fetchedAt));
+  } catch (error) {
+    state.results = demoResultsForSearch(origin, destination, departure, cabin, allPrograms);
+    setDataNotice(`即時資料目前不可用：${error.message}。暫時顯示示範資料，請稍後再試。`, "error");
+  } finally {
+    submitButton.disabled = false;
+    submitButton.querySelector("span:first-child").textContent = "搜尋可兌換航班";
+  }
   state.filter = "all";
   $$(".filter-pill").forEach((button) => button.classList.toggle("active", button.dataset.filter === "all"));
-  $("#updated-at").textContent = new Intl.DateTimeFormat("zh-TW", { hour: "2-digit", minute: "2-digit" }).format(new Date());
   renderResults();
   $("#results-section").scrollIntoView({ behavior: "smooth", block: "start" });
 }
